@@ -5,24 +5,37 @@ import java.awt.BorderLayout;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.JPanel;
 import javax.swing.border.LineBorder;
-import java.awt.Color;
 import javax.swing.UIManager;
 import javax.swing.JTextArea;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
+import java.time.Instant;
 
-public class GUI {
+public class GUI implements Runnable {
 	
 	JFrame jFrame = new JFrame("FTPTransfer");
-	JTextArea textArea = new JTextArea();	
+	static JTextArea textArea = new JTextArea();	
 	JScrollPane jsPane = new JScrollPane(textArea);
 	private JTextField textFieldServerReceiving;
 	private JTextField textFieldClientReceiving;
 	private JTextField textFieldClientSending;
-	private JTextField textFieldServerIP;
+	public JTextField textFieldServerIP;
+	ButtonGroup bGroup;
+	JRadioButton rdbtnServer;
+	JRadioButton rdbtnClient;
+	JButton btnStop;
+	public static JButton btnStart;
+	final JFileChooser fc = new JFileChooser();
+
 
 	public GUI() {
 		jFrame.setSize(406, 650);
@@ -40,25 +53,54 @@ public class GUI {
 		textArea.setEditable(false);
 		textArea.setText("");
 		
-		JButton btnStart = new JButton("Start");
+		btnStart = new JButton("Start");
+		btnStart.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				startButton();				
+			}
+		});
 		btnStart.setBounds(220, 324, 89, 23);
 		jFrame.getContentPane().add(btnStart);
 		
-		JButton btnStop = new JButton("Stop");
+		btnStop = new JButton("Stop");
+		btnStop.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				stopButton();
+			}
+		});
 		btnStop.setEnabled(false);
 		btnStop.setBounds(84, 324, 89, 23);
 		jFrame.getContentPane().add(btnStop);
 		
-		JRadioButton rdbtnClient = new JRadioButton("Client");
+		rdbtnClient = new JRadioButton("Client");
+		rdbtnClient.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(rdbtnClient.isSelected()) {
+					textFieldServerReceiving.setEnabled(false);
+					textFieldClientReceiving.setEnabled(true);
+					textFieldClientSending.setEnabled(true);
+					textFieldServerIP.setEnabled(true);
+				}
+			}
+		});
 		rdbtnClient.setBounds(47, 38, 57, 23);
 		jFrame.getContentPane().add(rdbtnClient);
 		
-		JRadioButton rdbtnServer = new JRadioButton("Server");
+		rdbtnServer = new JRadioButton("Server");
+		rdbtnServer.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				textFieldServerReceiving.setEnabled(true);
+				textFieldClientReceiving.setEnabled(false);
+				textFieldClientSending.setEnabled(false);
+				textFieldServerIP.setEnabled(false);
+				
+			}
+		});
 		rdbtnServer.setSelected(true);
 		rdbtnServer.setBounds(47, 16, 57, 23);
 		jFrame.getContentPane().add(rdbtnServer);
 		
-		ButtonGroup bGroup = new ButtonGroup();
+		bGroup = new ButtonGroup();
 		bGroup.add(rdbtnServer);
 		bGroup.add(rdbtnClient);
 		
@@ -77,6 +119,16 @@ public class GUI {
 		panel.add(lblLocalDirectory);
 		
 		textFieldServerReceiving = new JTextField();
+		textFieldServerReceiving.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				if(textFieldServerReceiving.isEnabled()) {
+					chooseFolder(textFieldServerReceiving);
+				}
+				
+			}
+		});
+		textFieldServerReceiving.setToolTipText("Click to select directory");
 		textFieldServerReceiving.setBounds(114, 11, 246, 20);
 		panel.add(textFieldServerReceiving);
 		textFieldServerReceiving.setColumns(10);
@@ -88,13 +140,21 @@ public class GUI {
 		jFrame.getContentPane().add(panel_1);
 		
 		JLabel lblReceiveDir = new JLabel("Receiving Directory");
-		lblReceiveDir.setBounds(10, 48, 94, 14);
+		lblReceiveDir.setBounds(10, 45, 94, 14);
 		panel_1.add(lblReceiveDir);
 		
 		textFieldClientReceiving = new JTextField();
+		textFieldClientReceiving.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if(textFieldClientReceiving.isEnabled()) {
+					chooseFolder(textFieldClientReceiving);
+				}
+			}
+		});
 		textFieldClientReceiving.setEnabled(false);
 		textFieldClientReceiving.setColumns(10);
-		textFieldClientReceiving.setBounds(114, 45, 246, 20);
+		textFieldClientReceiving.setBounds(114, 42, 246, 20);
 		panel_1.add(textFieldClientReceiving);
 		
 		JLabel lblSendDir = new JLabel("Sending Directory");
@@ -102,30 +162,77 @@ public class GUI {
 		panel_1.add(lblSendDir);
 		
 		textFieldClientSending = new JTextField();
+		textFieldClientSending.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				if(textFieldClientSending.isEnabled()) {
+					chooseFolder(textFieldClientSending);
+				}
+				
+			}
+		});
 		textFieldClientSending.setEnabled(false);
 		textFieldClientSending.setColumns(10);
 		textFieldClientSending.setBounds(114, 11, 246, 20);
 		panel_1.add(textFieldClientSending);
 		
 		JLabel lblServerIp = new JLabel("Server IP");
-		lblServerIp.setBounds(10, 79, 46, 14);
+		lblServerIp.setBounds(10, 76, 46, 14);
 		panel_1.add(lblServerIp);
 		
 		textFieldServerIP = new JTextField();
-		textFieldServerIP.setEditable(false);
-		textFieldServerIP.setBounds(114, 76, 246, 20);
+		textFieldServerIP.setEnabled(false);
+		textFieldServerIP.setBounds(114, 73, 246, 20);
 		panel_1.add(textFieldServerIP);
 		textFieldServerIP.setColumns(10);
 		
 		JLabel lblClient = new JLabel("Client");
 		lblClient.setBounds(10, 144, 46, 14);
 		jFrame.getContentPane().add(lblClient);
-		//bGroup.setSelected(true);
 		
 		jFrame.setVisible(true);
 	}
 	
-	public void print(String input) {
-		textArea.append(input);
+	public static void print(String input) {
+		textArea.append(input + "\n");
+	}
+	
+	private void startButton() {
+		if (rdbtnServer.isSelected()) {
+			btnStop.setEnabled(true);
+			btnStart.setEnabled(false);
+			textFieldServerReceiving.setEnabled(false);
+			rdbtnServer.setEnabled(false);
+			rdbtnClient.setEnabled(false);
+			new Thread(new Server()).start(); // start server class
+		}
+	}
+	
+	private void stopButton() {
+		if (rdbtnServer.isSelected()) {
+			Server.closeServer();
+			//btnStart.setEnabled(true);
+			btnStop.setEnabled(false);
+			textFieldServerReceiving.setEnabled(true);
+			rdbtnServer.setEnabled(true);
+			rdbtnClient.setEnabled(true);
+
+		}
+	}
+	
+	private String chooseFolder(JTextField field) {
+		fc.setAcceptAllFileFilterUsed(false);
+		fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		if (fc.showOpenDialog(field) == JFileChooser.APPROVE_OPTION) {
+			field.setText(fc.getSelectedFile().toString());
+		}
+		
+		return null;
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		
 	}
 }
