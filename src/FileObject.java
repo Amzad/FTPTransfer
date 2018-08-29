@@ -1,6 +1,7 @@
 import java.io.File;
+import java.io.Serializable;
 
-public class FileObject {
+public class FileObject implements Serializable {
 	
 	String name;
 	double size;

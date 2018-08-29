@@ -38,7 +38,8 @@ public class GUI implements Runnable {
 
 
 	public GUI() {
-		jFrame.setSize(406, 650);
+		jFrame.setResizable(false);
+		jFrame.setSize(397, 650);
 		jFrame.getContentPane().setLayout(null);
 		jFrame.setLocationRelativeTo(null);
 		
@@ -181,6 +182,7 @@ public class GUI implements Runnable {
 		panel_1.add(lblServerIp);
 		
 		textFieldServerIP = new JTextField();
+		textFieldServerIP.setText("192.168.1.5");
 		textFieldServerIP.setEnabled(false);
 		textFieldServerIP.setBounds(114, 73, 246, 20);
 		panel_1.add(textFieldServerIP);
@@ -206,6 +208,14 @@ public class GUI implements Runnable {
 			rdbtnClient.setEnabled(false);
 			new Thread(new Server()).start(); // start server class
 		}
+		if (rdbtnClient.isSelected()) {
+			btnStop.setEnabled(true);
+			btnStart.setEnabled(false);
+			textFieldServerReceiving.setEnabled(false);
+			rdbtnServer.setEnabled(false);
+			rdbtnClient.setEnabled(false);
+			new Thread(new Client()).start();
+		}
 	}
 	
 	private void stopButton() {
@@ -216,7 +226,14 @@ public class GUI implements Runnable {
 			textFieldServerReceiving.setEnabled(true);
 			rdbtnServer.setEnabled(true);
 			rdbtnClient.setEnabled(true);
-
+		}
+		if (rdbtnClient.isSelected()) {
+			btnStop.setEnabled(false);
+			btnStart.setEnabled(true);
+			textFieldClientReceiving.setEnabled(true);
+			textFieldClientSending.setEnabled(true);
+			rdbtnServer.setEnabled(true);
+			rdbtnClient.setEnabled(true);
 		}
 	}
 	

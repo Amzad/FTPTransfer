@@ -40,7 +40,7 @@ public class Server implements Runnable {
 			try {
 				socket = serverSocket.accept();
 				
-				//new Thread(new ClientHelper(socket)).start();
+				new Thread(new ClientHelper(socket)).start();
 				
 			} catch (SocketTimeoutException e3) {
 				//print("Resetting Socket");
