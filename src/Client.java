@@ -1,6 +1,4 @@
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,8 +8,12 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
-import org.apache.commons.*;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.regex.Pattern;
+
 import org.apache.commons.io.IOUtils;
 
 
@@ -20,24 +22,55 @@ public class Client extends Thread {
 	Socket s = null;
 	boolean connectionValid = true;
 	FileObject object;
+	String sendDir;
+	String recDir;
+	static Queue<FileObject> fileQueue = new LinkedList<>();
+	ObjectOutputStream out;
 
-	public Client() {
-
+	public Client(String ip, String send, String rec) {
+		serverIP = ip;
+		sendDir = send;
+		recDir = rec;
+		
 	}
 
 	public void run() {
 		createConnection();
 		if (s != null) {
-			sendObject();
-			getResponse();
+			//sendObject();
+			//getResponse();
+			monitorSending();
+			while (connectionValid) {
+				if(fileQueue.size() > 0) {
+					print("found file");
+					object = fileQueue.remove();
+					print(object.name);
+
+					sendRequest();
+
+				}
+				else {
+					try {
+						Thread.sleep(5000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
 
 		}
 	}
 
+	private void monitorSending() {
+		new Thread(new FolderWatcher(sendDir, recDir)).start();
+	}
+	
+	
 	private void createConnection() {
 		print("Connecting to " + serverIP);
 		try {
-			s = new Socket("127.0.0.1", 1337);
+			s = new Socket(serverIP, 1337);
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -48,57 +81,62 @@ public class Client extends Thread {
 		print("Server found");
 	}
 	
-	private void parseResponse(String reply) {
-		
-	}
-
-	private void getResponse() {
+	
+	private void sendRequest() {
 		try {
 			PrintWriter out = new PrintWriter(s.getOutputStream());
 			BufferedReader bReader = new BufferedReader(new InputStreamReader(s.getInputStream()));
 			String reply;
-
-			try {
-				print("Waiting for reply");
-				while ((reply = bReader.readLine()) == null) {
-				}
-				print(reply);
-				if (reply.equals("SendFile")) {
-					print("Sending file");
-
-				}
-
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				connectionValid = false;
-
+			out.println("PermissionToSendObject");
+			out.flush();
+			//out.close();
+			print("Permissiontosnedobject");
+			
+			while ((reply = bReader.readLine()) == null) {
+			}
+			
+			print("got reply");
+			print(reply);
+			
+			if (reply.equals("PermissionGranted")) {
+				print("Sending object");
+				sendObject();
+			}
+			
+			if (reply.equals("SendFile")) {
+				print("Sending file " + object.name);
+				sendFile(object);
+			}
+			
+			if (reply.equals("InvalidObject")) {
+				print("Sending object again");
+				sendObject();
 			}
 
-			sendFile(object);
 
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+		} catch (SocketException e) {
+			print("Server closed the connection");
+			connectionValid = false;
 		}
-
+		catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 	public void sendObject() {
-		//FileObject object = new FileObject("Naruto Shippuden", 324.25);
-		File myFile = new File("s.pdf");
-		object = new FileObject(myFile);
-		try {
-			ObjectOutputStream out = new ObjectOutputStream(s.getOutputStream());
+		try {	
+			out = new ObjectOutputStream(s.getOutputStream());
 			out.writeObject(object);
 			out.flush();
 			print("Client: " + object.name);
-			print("Client: " + Double.toString(object.size));
-			print("Client: " + Integer.toString(object.checkSum));
 			print("Object sent!");
-			//out.reset();
-			//out.close();
-		} catch (UnknownHostException e) {
+			
+		} catch (SocketException e) {
+			print("Socket Remotely Closed");
+		}
+		catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -110,15 +148,13 @@ public class Client extends Thread {
 	
 	private void sendFile(FileObject file) {
 		try {
-			print("Sending file method");
-			//File myFile = new File("s.pdf");
 			if (file.thisFile.exists() && !file.thisFile.isDirectory()) {
 				OutputStream outputStream = s.getOutputStream();
 				InputStream inputStream = new FileInputStream(file.thisFile);
 				IOUtils.copy(inputStream, outputStream);
 				inputStream.close();
 				outputStream.close();
-				print("file sent");
+				print("File: " + file.name + " sent.");
 			} else {
 				print("File not found");
 			}
@@ -132,6 +168,11 @@ public class Client extends Thread {
 
 	private void print(String input) {
 		GUI.print(input);
+	}
+	
+	public static boolean validateIP(String IP) {
+		Pattern PATTERN = Pattern.compile("^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
+		return PATTERN.matcher(IP).matches();
 	}
 
 }

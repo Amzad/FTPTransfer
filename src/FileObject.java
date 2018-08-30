@@ -6,6 +6,7 @@ public class FileObject implements Serializable {
 	String name;
 	int size;
 	int checkSum;
+	String dir;
 	File thisFile;
 
 	public FileObject(String name, int size) {
@@ -16,8 +17,10 @@ public class FileObject implements Serializable {
 	
 	public FileObject(File file) {
 		name = file.getName();
+		dir = file.getAbsolutePath();
 		size = (int) file.length();
 		thisFile = file;
+		createHash();
 	}
 	
 	private void createHash() {

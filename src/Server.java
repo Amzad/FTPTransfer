@@ -7,7 +7,6 @@ import java.net.SocketTimeoutException;
 
 public class Server implements Runnable {
 
-	private String serverIP = "127.0.0.1";
 	private int portNumber = 1337;
 	private static Socket socket = null;
 	private static ServerSocket serverSocket;
@@ -20,28 +19,28 @@ public class Server implements Runnable {
 	
 	public void run() {
 		connectionOpen = true;
-		ServerSocket serverSocket = null;
+		serverSocket = null;
 		try {
 			serverSocket = new ServerSocket(portNumber, 50);
 		} catch (BindException e0) {
 			print("Port already in use.");
 		} catch (IOException e1) {
+			print("IO Exception");
 			e1.printStackTrace();
 		}
-		
-		print("Waiting for incoming connections.");
 		try {
 			serverSocket.setSoTimeout(1000);
 		} catch (SocketException e) {
+			print("Socket Exception");
 			e.printStackTrace();
 		}
+		print("Waiting for incoming connections.");
 		while (connectionOpen) {
 			socket = null;
 			try {
-				socket = serverSocket.accept();
-				
+				socket = serverSocket.accept();			
+				print("creating new helper");
 				new Thread(new ClientHelper(socket)).start();
-				
 			} catch (SocketTimeoutException e3) {
 				//print("Resetting Socket");
 				if (connectionOpen == false) {
@@ -50,7 +49,7 @@ public class Server implements Runnable {
 				}
 			} catch (IOException e2) {
 				System.out.println(e2);
-				print("Unable to open socket");
+				print("Unable to open socket/IO Exception");
 			} 
 		}
 		try {

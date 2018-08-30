@@ -145,6 +145,7 @@ public class GUI implements Runnable {
 		panel_1.add(lblReceiveDir);
 		
 		textFieldClientReceiving = new JTextField();
+		textFieldClientReceiving.setText("C:\\Users\\Amzad\\Documents\\Move\\");
 		textFieldClientReceiving.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
@@ -163,6 +164,7 @@ public class GUI implements Runnable {
 		panel_1.add(lblSendDir);
 		
 		textFieldClientSending = new JTextField();
+		textFieldClientSending.setText("C:\\Users\\Amzad\\Documents\\Watch\\");
 		textFieldClientSending.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
@@ -182,7 +184,7 @@ public class GUI implements Runnable {
 		panel_1.add(lblServerIp);
 		
 		textFieldServerIP = new JTextField();
-		textFieldServerIP.setText("192.168.1.5");
+		textFieldServerIP.setText("127.0.0.1");
 		textFieldServerIP.setEnabled(false);
 		textFieldServerIP.setBounds(114, 73, 246, 20);
 		panel_1.add(textFieldServerIP);
@@ -197,24 +199,23 @@ public class GUI implements Runnable {
 	
 	public static void print(String input) {
 		textArea.append(input + "\n");
+		System.out.println(input);
 	}
 	
 	private void startButton() {
 		if (rdbtnServer.isSelected()) {
-			btnStop.setEnabled(true);
-			btnStart.setEnabled(false);
-			textFieldServerReceiving.setEnabled(false);
-			rdbtnServer.setEnabled(false);
-			rdbtnClient.setEnabled(false);
+			disableComponents();
 			new Thread(new Server()).start(); // start server class
 		}
 		if (rdbtnClient.isSelected()) {
-			btnStop.setEnabled(true);
-			btnStart.setEnabled(false);
-			textFieldServerReceiving.setEnabled(false);
-			rdbtnServer.setEnabled(false);
-			rdbtnClient.setEnabled(false);
-			new Thread(new Client()).start();
+			if (Client.validateIP(textFieldServerIP.getText())) {
+				disableComponents();
+				new Thread(new Client(textFieldServerIP.getText(),
+										textFieldClientSending.getText(), 
+										textFieldClientReceiving.getText() )).start();
+			} else {
+				print("Invalid IP Address");
+			}
 		}
 	}
 	
@@ -245,6 +246,14 @@ public class GUI implements Runnable {
 		}
 		
 		return null;
+	}
+
+	private void disableComponents() {
+		btnStop.setEnabled(true);
+		btnStart.setEnabled(false);
+		textFieldServerReceiving.setEnabled(false);
+		rdbtnServer.setEnabled(false);
+		rdbtnClient.setEnabled(false);
 	}
 
 	@Override
