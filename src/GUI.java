@@ -25,14 +25,14 @@ public class GUI implements Runnable {
 	JFrame jFrame = new JFrame("FTPTransfer");
 	static JTextArea textArea = new JTextArea();	
 	JScrollPane jsPane = new JScrollPane(textArea);
-	private JTextField textFieldServerReceiving;
-	private JTextField textFieldClientReceiving;
-	private JTextField textFieldClientSending;
+	private static JTextField textFieldServerReceiving;
+	private static JTextField textFieldClientReceiving;
+	private static JTextField textFieldClientSending;
 	public JTextField textFieldServerIP;
 	ButtonGroup bGroup;
-	JRadioButton rdbtnServer;
-	JRadioButton rdbtnClient;
-	JButton btnStop;
+	static JRadioButton rdbtnServer;
+	static JRadioButton rdbtnClient;
+	static JButton btnStop;
 	public static JButton btnStart;
 	final JFileChooser fc = new JFileChooser();
 
@@ -194,6 +194,15 @@ public class GUI implements Runnable {
 		lblClient.setBounds(10, 144, 46, 14);
 		jFrame.getContentPane().add(lblClient);
 		
+		JButton btnClear = new JButton("Clear");
+		btnClear.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				textArea.setText("");
+			}
+		});
+		btnClear.setBounds(10, 324, 58, 23);
+		jFrame.getContentPane().add(btnClear);
+		
 		jFrame.setVisible(true);
 	}
 	
@@ -219,7 +228,7 @@ public class GUI implements Runnable {
 		}
 	}
 	
-	private void stopButton() {
+	public static void stopButton() {
 		if (rdbtnServer.isSelected()) {
 			Server.closeServer();
 			//btnStart.setEnabled(true);
@@ -235,6 +244,7 @@ public class GUI implements Runnable {
 			textFieldClientSending.setEnabled(true);
 			rdbtnServer.setEnabled(true);
 			rdbtnClient.setEnabled(true);
+			FolderWatcher.stop();
 		}
 	}
 	
@@ -254,6 +264,15 @@ public class GUI implements Runnable {
 		textFieldServerReceiving.setEnabled(false);
 		rdbtnServer.setEnabled(false);
 		rdbtnClient.setEnabled(false);
+	}
+	
+	public static void enableComponentsServer() {
+		Server.closeServer();
+		//btnStart.setEnabled(true);
+		btnStop.setEnabled(false);
+		textFieldServerReceiving.setEnabled(true);
+		rdbtnServer.setEnabled(true);
+		rdbtnClient.setEnabled(true);
 	}
 
 	@Override

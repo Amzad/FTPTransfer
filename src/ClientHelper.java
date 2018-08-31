@@ -129,14 +129,11 @@ public class ClientHelper extends Thread {
 				PrintWriter out = new PrintWriter(socket.getOutputStream());
 				out.println("SendFile" + file.checkSum);
 				out.flush();
-				print("Receiving file");
 				InputStream inputStream = socket.getInputStream();
 				OutputStream outputStream = new FileOutputStream(new File(file.name));
 				IOUtils.copy(inputStream, outputStream);
 				outputStream.close();
-				print("File received");
 				dataQueue.remove(hash);
-				print("Server done");
 			}
 			
 		} catch (IOException e) {

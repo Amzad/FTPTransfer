@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -64,17 +65,21 @@ public class Client extends Thread {
 	
 	
 	private void createConnection() {
-		print("Connecting to " + serverIP);
+		print("Connecting to " + serverIP + ":1337");
 		try {
 			s = new Socket(serverIP, 1337);
+			print("Server found");
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (ConnectException e) {
+			print("Connection refused by server");
+			GUI.stopButton();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		print("Server found");
+		} 
+		
 	}
 	
 	
@@ -150,11 +155,9 @@ public class Client extends Thread {
 		try {
 
 			if (file.thisFile.exists() && !file.thisFile.isDirectory()) {
-				Thread t = new FileTransfer(file, s, 2);
+				Thread t = new FileTransfer(file, s);
 				t.start();
-				print("New thread for file transfer.");
 				t.join();
-				print("Client done");
 				return true;
 			} else {
 				print("File not found");

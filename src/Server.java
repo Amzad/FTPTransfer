@@ -24,6 +24,10 @@ public class Server implements Runnable {
 			serverSocket = new ServerSocket(portNumber, 50);
 		} catch (BindException e0) {
 			print("Port already in use.");
+			GUI.btnStart.setEnabled(true);
+			GUI.enableComponentsServer();
+			closeServer();
+			return;
 		} catch (IOException e1) {
 			print("IO Exception");
 			e1.printStackTrace();
@@ -54,7 +58,6 @@ public class Server implements Runnable {
 		}
 		try {
 			serverSocket.close();
-			//socket.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

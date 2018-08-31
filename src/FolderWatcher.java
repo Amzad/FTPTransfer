@@ -11,11 +11,11 @@ import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class FolderWatcher implements Runnable {
 	static boolean active = true;
 	String watchDir;
+	static WatchService watchService;
 	
 	public FolderWatcher(String sending, String receiving) {
 		watchDir = sending;
@@ -39,7 +39,7 @@ public class FolderWatcher implements Runnable {
 		
 		Path watchPath = Paths.get(watchDir);
 		//Path movePath = Paths.get(moveDir);
-		WatchService watchService = FileSystems.getDefault().newWatchService();
+		watchService = FileSystems.getDefault().newWatchService();
 		WatchKey watchKey = watchPath.register(watchService, ENTRY_CREATE);
 		//WatchKey moveKey = movePath.register(watchService, ENTRY_CREATE);
 
@@ -91,12 +91,21 @@ public class FolderWatcher implements Runnable {
 
 	}
 
-	public void stop() {
+	public static void stop() {
 		active = false;
+		try {
+			watchService.close();
+		} catch (NullPointerException e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			//e.printStackTrace();
+		}
 		print("Stopping Watch Service");
 	}
 	
-	private void print(String input) {
+	private static void print(String input) {
 		GUI.print(input);
 	}
 
