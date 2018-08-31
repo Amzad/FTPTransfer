@@ -11,7 +11,7 @@ public class Server implements Runnable {
 	private static Socket socket = null;
 	private static ServerSocket serverSocket;
 	private static boolean connectionOpen = true;
-
+	 
 	public Server() {
 		
 		

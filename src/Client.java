@@ -37,17 +37,13 @@ public class Client extends Thread {
 	public void run() {
 		createConnection();
 		if (s != null) {
-			//sendObject();
-			//getResponse();
 			monitorSending();
 			while (connectionValid) {
 				if(fileQueue.size() > 0) {
 					print("found file");
 					object = fileQueue.remove();
 					print(object.name);
-
 					sendRequest();
-
 				}
 				else {
 					try {
@@ -89,34 +85,38 @@ public class Client extends Thread {
 			String reply;
 			out.println("PermissionToSendObject");
 			out.flush();
-			//out.close();
-			print("Permissiontosnedobject");
-			
-			while ((reply = bReader.readLine()) == null) {
-			}
-			
-			print("got reply");
-			print(reply);
-			
-			if (reply.equals("PermissionGranted")) {
-				print("Sending object");
-				sendObject();
-			}
-			
-			if (reply.equals("SendFile")) {
-				print("Sending file " + object.name);
-				sendFile(object);
-			}
-			
-			if (reply.equals("InvalidObject")) {
-				print("Sending object again");
-				sendObject();
-			}
+			boolean waiting = true;
+			while (waiting) {
+				while ((reply = bReader.readLine()) == null) {
+				}
 
+				print("got reply");
+				print(reply);
+
+				if (reply.equals("PermissionGranted")) {
+					print("Sending object");
+					sendObject();
+				} else
+
+				if (reply.equals("SendFile")) {
+					print("Sending file " + object.name);
+					if (sendFile(object)) {
+						waiting = false;
+					}
+				} else
+
+				if (reply.equals("InvalidObject")) {
+					print("Sending object again");
+					sendObject();
+				}
+
+			}
+			
 
 		} catch (SocketException e) {
 			print("Server closed the connection");
 			connectionValid = false;
+			e.printStackTrace();
 		}
 		catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -146,23 +146,25 @@ public class Client extends Thread {
 
 	}
 	
-	private void sendFile(FileObject file) {
+	private boolean sendFile(FileObject file) {
 		try {
+
 			if (file.thisFile.exists() && !file.thisFile.isDirectory()) {
-				OutputStream outputStream = s.getOutputStream();
-				InputStream inputStream = new FileInputStream(file.thisFile);
-				IOUtils.copy(inputStream, outputStream);
-				inputStream.close();
-				outputStream.close();
-				print("File: " + file.name + " sent.");
+				Thread t = new FileTransfer(file, s, 2);
+				t.start();
+				print("New thread for file transfer.");
+				t.join();
+				print("Client done");
+				return true;
 			} else {
 				print("File not found");
 			}
 
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
+		} catch (InterruptedException e) {
+			print("Thread interrupted");
 			e.printStackTrace();
 		}
+		return false;
 
 	}
 

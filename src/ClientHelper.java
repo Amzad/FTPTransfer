@@ -9,6 +9,8 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 
@@ -17,7 +19,8 @@ public class ClientHelper extends Thread {
 	Socket socket;
 	FileObject file;
 	boolean isAlive = true;
-
+	static Map<Integer,FileObject> dataQueue = new HashMap<Integer,FileObject>();
+	
 	public ClientHelper(Socket socket) {
 		this.socket = socket;
 	}
@@ -25,15 +28,12 @@ public class ClientHelper extends Thread {
 	public void run() {
 		while(isAlive) {
 			parseReply();
-			//receiveObject();
 		}
-		//requestFile();
-		//receiveFile();
 	}
 	
 	private void parseReply() {
 		try {
-			print("waiting for input");
+			//print("waiting for input");
 			String input;
 			InputStreamReader inputStreamReader = new InputStreamReader(socket.getInputStream());
 			PrintWriter outputStreamWriter = new PrintWriter(socket.getOutputStream());
@@ -47,10 +47,10 @@ public class ClientHelper extends Thread {
 				outputStreamWriter.println("PermissionGranted");
 				outputStreamWriter.flush();
 				if (isValidObject()) { // If object is valid, request file.
+					dataQueue.put(file.checkSum, file);	
+					print(file.checkSum + " inserted into DB");
 					outputStreamWriter.println("SendFile");
 					outputStreamWriter.flush();
-					receiveFile(); // Receive the file
-
 				} else {
 					outputStreamWriter.println("InvalidObject");
 					outputStreamWriter.flush();
@@ -62,7 +62,10 @@ public class ClientHelper extends Thread {
 				socket.close();
 				isAlive = false;
 
+			} else if (input.substring(0,9).equals("NewStream")) {
+				receiveFile(input);
 			}
+			
 			
 			
 		} catch (SocketException e) {
@@ -112,20 +115,46 @@ public class ClientHelper extends Thread {
 		return false;
 	}
 	
-	private void receiveFile() {	
+	private void receiveFile(String reply) {	
 		try {
-			print("Receiving file");
-			InputStream inputStream = socket.getInputStream();
-			OutputStream outputStream = new FileOutputStream(new File(file.name));
-			IOUtils.copy(inputStream, outputStream);
-			inputStream.close();
-			outputStream.close();
-			print("Done");
+			int hash = Integer.parseInt(reply.substring(9, reply.length()));
+			print("Hash " + hash);
+			print("Hash2 " + dataQueue.get(hash).checkSum);
+			if (hash == dataQueue.get(hash).checkSum) {
+				FileObject file = dataQueue.get(hash);
+				//Thread t = (new FileTransfer(file, socket, 1));
+				//t.start();
+				//print("New thread for file transfer.");
+				//t.join();
+				PrintWriter out = new PrintWriter(socket.getOutputStream());
+				out.println("SendFile" + file.checkSum);
+				out.flush();
+				print("Receiving file");
+				InputStream inputStream = socket.getInputStream();
+				OutputStream outputStream = new FileOutputStream(new File(file.name));
+				IOUtils.copy(inputStream, outputStream);
+				outputStream.close();
+				print("File received");
+				dataQueue.remove(hash);
+				print("Server done");
+			}
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 
+	}
+	
+	private void sendFile() {
+		
+		
+	}
+	
+	private void waitForFile() {
+		
+		
 	}
 
 	private void print(String input) {
