@@ -13,16 +13,18 @@ public class FileTransfer extends Thread{
 	
 	FileObject file;
 	Socket socket;
+	String serverIP;
 
-	public FileTransfer(FileObject file, Socket socket) {
+	public FileTransfer(FileObject file, Socket socket, String serverIP) {
 		this.file = file;
 		this.socket = socket;
+		this.serverIP = serverIP;
 
 	}
 	
 	public void run() {
 		try {
-			Socket socket = new Socket("127.0.0.1", 1337);
+			Socket socket = new Socket(serverIP, 1337);
 			PrintWriter out = new PrintWriter(socket.getOutputStream());
 			BufferedReader bReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			String reply;

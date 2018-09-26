@@ -11,9 +11,10 @@ public class Server implements Runnable {
 	private static Socket socket = null;
 	private static ServerSocket serverSocket;
 	private static boolean connectionOpen = true;
+	private static String receivingDir; 
 	 
-	public Server() {
-		
+	public Server(String string) {
+		receivingDir = string;
 		
 	}
 	
@@ -44,7 +45,7 @@ public class Server implements Runnable {
 			try {
 				socket = serverSocket.accept();			
 				print("creating new helper");
-				new Thread(new ClientHelper(socket)).start();
+				new Thread(new ClientHelper(socket, receivingDir)).start();
 			} catch (SocketTimeoutException e3) {
 				//print("Resetting Socket");
 				if (connectionOpen == false) {

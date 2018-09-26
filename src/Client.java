@@ -41,7 +41,6 @@ public class Client extends Thread {
 			monitorSending();
 			while (connectionValid) {
 				if(fileQueue.size() > 0) {
-					print("found file");
 					object = fileQueue.remove();
 					print(object.name);
 					sendRequest();
@@ -65,10 +64,9 @@ public class Client extends Thread {
 	
 	
 	private void createConnection() {
-		print("Connecting to " + serverIP + ":1337");
 		try {
 			s = new Socket(serverIP, 1337);
-			print("Server found");
+			print("Connected to " + serverIP);
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -95,23 +93,22 @@ public class Client extends Thread {
 				while ((reply = bReader.readLine()) == null) {
 				}
 
-				print("got reply");
-				print(reply);
+				//print("got reply");
+				//print(reply);
 
 				if (reply.equals("PermissionGranted")) {
-					print("Sending object");
+					print("Sending metadata");
 					sendObject();
 				} else
 
 				if (reply.equals("SendFile")) {
-					print("Sending file " + object.name);
 					if (sendFile(object)) {
 						waiting = false;
 					}
 				} else
 
 				if (reply.equals("InvalidObject")) {
-					print("Sending object again");
+					print("Checksum mismatch. Sending object again");
 					sendObject();
 				}
 
@@ -155,7 +152,7 @@ public class Client extends Thread {
 		try {
 
 			if (file.thisFile.exists() && !file.thisFile.isDirectory()) {
-				Thread t = new FileTransfer(file, s);
+				Thread t = new FileTransfer(file, s, serverIP);
 				t.start();
 				t.join();
 				return true;

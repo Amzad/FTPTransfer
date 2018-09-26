@@ -184,7 +184,7 @@ public class GUI implements Runnable {
 		panel_1.add(lblServerIp);
 		
 		textFieldServerIP = new JTextField();
-		textFieldServerIP.setText("127.0.0.1");
+		textFieldServerIP.setText("74.91.116.201");
 		textFieldServerIP.setEnabled(false);
 		textFieldServerIP.setBounds(114, 73, 246, 20);
 		panel_1.add(textFieldServerIP);
@@ -214,7 +214,7 @@ public class GUI implements Runnable {
 	private void startButton() {
 		if (rdbtnServer.isSelected()) {
 			disableComponents();
-			new Thread(new Server()).start(); // start server class
+			new Thread(new Server(textFieldServerReceiving.getText())).start(); // start server class
 		}
 		if (rdbtnClient.isSelected()) {
 			if (Client.validateIP(textFieldServerIP.getText())) {

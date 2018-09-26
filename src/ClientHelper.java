@@ -17,12 +17,14 @@ import org.apache.commons.io.IOUtils;
 public class ClientHelper extends Thread {
 
 	Socket socket;
+	String receivingDir;
 	FileObject file;
 	boolean isAlive = true;
 	static Map<Integer,FileObject> dataQueue = new HashMap<Integer,FileObject>();
 	
-	public ClientHelper(Socket socket) {
+	public ClientHelper(Socket socket, String receivingDir) {
 		this.socket = socket;
+		this.receivingDir = receivingDir;
 	}
 
 	public void run() {
@@ -118,9 +120,10 @@ public class ClientHelper extends Thread {
 	private void receiveFile(String reply) {	
 		try {
 			int hash = Integer.parseInt(reply.substring(9, reply.length()));
-			print("Hash " + hash);
-			print("Hash2 " + dataQueue.get(hash).checkSum);
+			//print("Hash " + hash);
+			//print("Hash2 " + dataQueue.get(hash).checkSum);
 			if (hash == dataQueue.get(hash).checkSum) {
+				//print("Valid hash");
 				FileObject file = dataQueue.get(hash);
 				//Thread t = (new FileTransfer(file, socket, 1));
 				//t.start();
@@ -130,10 +133,15 @@ public class ClientHelper extends Thread {
 				out.println("SendFile" + file.checkSum);
 				out.flush();
 				InputStream inputStream = socket.getInputStream();
-				OutputStream outputStream = new FileOutputStream(new File(file.name));
+				File temp = new File(receivingDir + "\\" + file.name);
+				GUI.print(temp.getAbsolutePath());
+				OutputStream outputStream = new FileOutputStream(temp);
 				IOUtils.copy(inputStream, outputStream);
 				outputStream.close();
 				dataQueue.remove(hash);
+				print(temp.getName() + " saved to " + temp.getAbsolutePath());
+			} else {
+				print("Invalid checksum");
 			}
 			
 		} catch (IOException e) {
