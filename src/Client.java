@@ -26,6 +26,7 @@ public class Client extends Thread {
 	String sendDir;
 	String recDir;
 	static Queue<FileObject> fileQueue = new LinkedList<>();
+	static Queue<FileObject> returnQueue = new LinkedList<>();
 	ObjectOutputStream out;
 
 	public Client(String ip, String send, String rec) {
@@ -36,14 +37,14 @@ public class Client extends Thread {
 	}
 
 	public void run() {
-		createConnection();
+		createConnection(); // Connect to server
 		if (s != null) {
-			monitorSending();
+			monitorSending(); // Monitor folder for new files
 			while (connectionValid) {
 				if(fileQueue.size() > 0) {
-					object = fileQueue.remove();
+					object = fileQueue.remove(); // Remove file from queue
 					print(object.name);
-					sendRequest();
+					sendRequest(); // Send file
 				}
 				else {
 					try {
@@ -90,12 +91,10 @@ public class Client extends Thread {
 			out.flush();
 			boolean waiting = true;
 			while (waiting) {
+				// Wait for valid response
 				while ((reply = bReader.readLine()) == null) {
 				}
-
-				//print("got reply");
-				//print(reply);
-
+				
 				if (reply.equals("PermissionGranted")) {
 					print("Sending metadata");
 					sendObject();

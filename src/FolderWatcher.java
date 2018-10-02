@@ -15,10 +15,12 @@ import java.util.List;
 public class FolderWatcher implements Runnable {
 	static boolean active = true;
 	String watchDir;
+	String receiveDir;
 	static WatchService watchService;
 	
 	public FolderWatcher(String sending, String receiving) {
 		watchDir = sending;
+		receiveDir = receiving;
 	}
 
 	public void run() {
