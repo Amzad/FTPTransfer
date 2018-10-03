@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,7 +45,7 @@ public class ClientHelper extends Thread {
 			while ((input = inputStream.readLine()) == null) {
 			}
 
-			print(input);
+			//print(input);
 			if (input.equals("PermissionToSendObject")) {
 				outputStreamWriter.println("PermissionGranted");
 				outputStreamWriter.flush();
@@ -66,6 +67,7 @@ public class ClientHelper extends Thread {
 
 			} else if (input.substring(0,9).equals("NewStream")) {
 				receiveFile(input);
+				waitForFile();
 			}
 			
 			
@@ -120,15 +122,8 @@ public class ClientHelper extends Thread {
 	private void receiveFile(String reply) {	
 		try {
 			int hash = Integer.parseInt(reply.substring(9, reply.length()));
-			//print("Hash " + hash);
-			//print("Hash2 " + dataQueue.get(hash).checkSum);
 			if (hash == dataQueue.get(hash).checkSum) {
-				//print("Valid hash");
 				FileObject file = dataQueue.get(hash);
-				//Thread t = (new FileTransfer(file, socket, 1));
-				//t.start();
-				//print("New thread for file transfer.");
-				//t.join();
 				PrintWriter out = new PrintWriter(socket.getOutputStream());
 				out.println("SendFile" + file.checkSum);
 				out.flush();
@@ -145,7 +140,6 @@ public class ClientHelper extends Thread {
 			}
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -153,12 +147,51 @@ public class ClientHelper extends Thread {
 	}
 	
 	private void sendFile() {
-		
-		
+		try {
+			PrintWriter out = new PrintWriter(socket.getOutputStream());
+			BufferedReader bReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+			String reply;
+
+			out.println("NewStream" + file.checkSum);
+			out.flush();
+
+			while ((reply = bReader.readLine()) == null) {
+			}
+
+			if (reply.equals("SendFile" + file.checkSum)) {
+				print("Sending file " + file.name);
+				OutputStream outputStream = socket.getOutputStream();
+				InputStream inputStream = new FileInputStream(file.thisFile);
+				IOUtils.copy(inputStream, outputStream);
+				inputStream.close();
+				print("File: " + file.name + " sent.");
+				outputStream.flush();
+				outputStream.close();
+				socket.close();
+			}
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
 	}
 	
 	private void waitForFile() {
-		
+		boolean waiting = true;
+		while(waiting) {
+			if(Server.fileQueue.size() > 0) {
+				synchronized(this) {
+					String filenew = Server.fileQueue.peek().name.substring(0, Server.fileQueue.peek().name.length()-4);
+					String fileold = file.name.substring(0, file.name.length()-4);
+					
+					if (filenew.equals(fileold)) {
+						
+					}
+
+				}
+				
+			}
+		}
 		
 	}
 

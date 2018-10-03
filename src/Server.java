@@ -4,6 +4,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class Server implements Runnable {
 
@@ -12,6 +14,8 @@ public class Server implements Runnable {
 	private static ServerSocket serverSocket;
 	private static boolean connectionOpen = true;
 	private static String receivingDir; 
+	
+	static Queue<FileObject> fileQueue = new LinkedList<>();
 	 
 	public Server(String string) {
 		receivingDir = string;
@@ -40,14 +44,15 @@ public class Server implements Runnable {
 			e.printStackTrace();
 		}
 		print("Waiting for incoming connections.");
+		monitorSending();
 		while (connectionOpen) {
 			socket = null;
 			try {
-				socket = serverSocket.accept();			
+				socket = serverSocket.accept();
 				print("creating new helper");
 				new Thread(new ClientHelper(socket, receivingDir)).start();
 			} catch (SocketTimeoutException e3) {
-				//print("Resetting Socket");
+				// print("Resetting Socket");
 				if (connectionOpen == false) {
 					GUI.btnStart.setEnabled(true);
 					break;
@@ -55,7 +60,7 @@ public class Server implements Runnable {
 			} catch (IOException e2) {
 				System.out.println(e2);
 				print("Unable to open socket/IO Exception");
-			} 
+			}
 		}
 		try {
 			serverSocket.close();
@@ -64,6 +69,10 @@ public class Server implements Runnable {
 			e.printStackTrace();
 		}
 	}
+	
+	private void monitorSending() {
+		new Thread(new FolderWatcher(receivingDir, 1)).start();
+	}
 
 	private void print(String input) {
 		GUI.print(input);
@@ -71,6 +80,7 @@ public class Server implements Runnable {
 	
 	public static void closeServer() {
 		connectionOpen = false;
+		FolderWatcher.stop();
 	}
 
 }

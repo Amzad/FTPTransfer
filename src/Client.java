@@ -60,7 +60,7 @@ public class Client extends Thread {
 	}
 
 	private void monitorSending() {
-		new Thread(new FolderWatcher(sendDir, recDir)).start();
+		new Thread(new FolderWatcher(sendDir, 0)).start();
 	}
 	
 	
@@ -105,6 +105,12 @@ public class Client extends Thread {
 						waiting = false;
 					}
 				} else
+					
+				if (reply.equals("FileReady")) {
+					if (sendFile(object)) {
+						waiting = false;
+					}
+				} else	
 
 				if (reply.equals("InvalidObject")) {
 					print("Checksum mismatch. Sending object again");
@@ -165,6 +171,14 @@ public class Client extends Thread {
 		}
 		return false;
 
+	}
+	
+	private boolean receiveFile() {
+		
+		
+		
+		
+		return false;
 	}
 
 	private void print(String input) {

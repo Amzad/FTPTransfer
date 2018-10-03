@@ -15,12 +15,13 @@ import java.util.List;
 public class FolderWatcher implements Runnable {
 	static boolean active = true;
 	String watchDir;
-	String receiveDir;
+	String processedDir;
 	static WatchService watchService;
+	int mode;
 	
-	public FolderWatcher(String sending, String receiving) {
+	public FolderWatcher(String sending, int mode) {
 		watchDir = sending;
-		receiveDir = receiving;
+		this.mode = mode;
 	}
 
 	public void run() {
@@ -36,19 +37,14 @@ public class FolderWatcher implements Runnable {
 	}
 
 	public void start() throws IOException {
-		//String watchDir = watchDir;
-		//String moveDir = Main.prefs.get("moveDirectory", null);
-		
+
 		Path watchPath = Paths.get(watchDir);
-		//Path movePath = Paths.get(moveDir);
 		watchService = FileSystems.getDefault().newWatchService();
 		WatchKey watchKey = watchPath.register(watchService, ENTRY_CREATE);
-		//WatchKey moveKey = movePath.register(watchService, ENTRY_CREATE);
 
 		while (!Thread.interrupted()) {
 			try {
 				watchKey = watchService.take();
-				//moveKey = watchService.take();
 			} catch (InterruptedException e) {
 				stop();
 				break;
@@ -72,13 +68,14 @@ public class FolderWatcher implements Runnable {
 							e.printStackTrace();
 						}
 
-						// new NameParser(watchDir + name);
 						FileObject file = new FileObject(temp);
-						Client.fileQueue.add(file);
-						
-					}
-					
-					
+						if (mode == 0) {
+							Client.fileQueue.add(file);
+						}
+						else {
+							Server.fileQueue.add(file);
+						}
+					}	
 				}
 				if (watchKey == null) {
 				}
@@ -92,7 +89,7 @@ public class FolderWatcher implements Runnable {
 		}
 
 	}
-
+	
 	public static void stop() {
 		active = false;
 		try {
