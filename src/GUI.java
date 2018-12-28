@@ -19,6 +19,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.time.Instant;
+import javax.swing.JMenuBar;
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 
 public class GUI implements Runnable {
 	
@@ -202,6 +205,27 @@ public class GUI implements Runnable {
 		});
 		btnClear.setBounds(10, 324, 58, 23);
 		jFrame.getContentPane().add(btnClear);
+		
+		JMenuBar menuBar = new JMenuBar();
+		jFrame.setJMenuBar(menuBar);
+		
+		JMenu mnFile = new JMenu("File");
+		menuBar.add(mnFile);
+		
+		JMenuItem mntmExit = new JMenuItem("Exit");
+		mnFile.add(mntmExit);
+		
+		JMenu mnFtp = new JMenu("Preferences");
+		menuBar.add(mnFtp);
+		
+		JMenuItem mntmDirectories = new JMenuItem("Directories");
+		mnFtp.add(mntmDirectories);
+		
+		JMenuItem mntmFtp = new JMenuItem("FTP");
+		mnFtp.add(mntmFtp);
+		
+		JMenuItem mntmMysql = new JMenuItem("MySQL");
+		mnFtp.add(mntmMysql);
 		
 		jFrame.setVisible(true);
 	}

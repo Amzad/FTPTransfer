@@ -6,10 +6,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +24,8 @@ public class ClientHelper extends Thread {
 	FileObject file;
 	boolean isAlive = true;
 	static Map<Integer,FileObject> dataQueue = new HashMap<Integer,FileObject>();
+	static Map<Integer,FileObject> finiQueue = new HashMap<Integer,FileObject>();
+	ObjectOutputStream out;
 	
 	public ClientHelper(Socket socket, String receivingDir) {
 		this.socket = socket;
@@ -70,6 +74,11 @@ public class ClientHelper extends Thread {
 				waitForFile();
 			}
 			
+			else if (input.substring(0,9).equals("NewStream")) {
+				receiveFile(input);
+				waitForFile();
+			}
+			
 			
 			
 		} catch (SocketException e) {
@@ -82,6 +91,7 @@ public class ClientHelper extends Thread {
 		}
 		
 	}
+	
 	private boolean isValidObject() {
 		try {
 			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
@@ -152,7 +162,7 @@ public class ClientHelper extends Thread {
 			BufferedReader bReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 			String reply;
 
-			out.println("NewStream" + file.checkSum);
+			out.println("FileReady");
 			out.flush();
 
 			while ((reply = bReader.readLine()) == null) {
@@ -181,18 +191,57 @@ public class ClientHelper extends Thread {
 		while(waiting) {
 			if(Server.fileQueue.size() > 0) {
 				synchronized(this) {
-					String filenew = Server.fileQueue.peek().name.substring(0, Server.fileQueue.peek().name.length()-4);
-					String fileold = file.name.substring(0, file.name.length()-4);
-					
-					if (filenew.equals(fileold)) {
+					try {
+						Server.fileQueue.wait();
+						String filenew = Server.fileQueue.peek().name.substring(0, Server.fileQueue.peek().name.length()-4);
+						String fileold = file.name.substring(0, file.name.length()-4);
 						
+						if (filenew.equals(fileold)) {
+							file = Server.fileQueue.peek();
+							Server.fileQueue.remove();
+							sendObject();
+							break;
+						}
+						
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
-
 				}
-				
+			}
+			try {
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				continue;
 			}
 		}
 		
+	}
+	
+	public void sendObject() {
+		try {	
+			PrintWriter pOut = new PrintWriter(socket.getOutputStream());
+			pOut.println("FileReady" + file.checkSum);
+			pOut.flush();
+			out = new ObjectOutputStream(socket.getOutputStream());
+			out.writeObject(file);
+			out.flush();
+			print("Server: " + file.name);
+			print("Object sent!");
+			
+		} catch (SocketException e) {
+			print("Socket Remotely Closed");
+		}
+		catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 	private void print(String input) {

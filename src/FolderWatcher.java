@@ -74,6 +74,7 @@ public class FolderWatcher implements Runnable {
 						}
 						else {
 							Server.fileQueue.add(file);
+							Server.fileQueue.notifyAll();
 						}
 					}	
 				}

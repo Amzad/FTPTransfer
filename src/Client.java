@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -23,6 +24,7 @@ public class Client extends Thread {
 	Socket s = null;
 	boolean connectionValid = true;
 	FileObject object;
+	FileObject file;
 	String sendDir;
 	String recDir;
 	static Queue<FileObject> fileQueue = new LinkedList<>();
@@ -102,13 +104,13 @@ public class Client extends Thread {
 
 				if (reply.equals("SendFile")) {
 					if (sendFile(object)) {
-						waiting = false;
+						print(object.name + " sent. Waiting for response.");
 					}
 				} else
 					
 				if (reply.equals("FileReady")) {
-					if (sendFile(object)) {
-						waiting = false;
+					if (isValidObject()) {
+						receiveFile();
 					}
 				} else	
 
@@ -153,6 +155,39 @@ public class Client extends Thread {
 
 	}
 	
+	private boolean isValidObject() {
+		try {
+			ObjectInputStream in = new ObjectInputStream(s.getInputStream());
+			FileObject object = (FileObject) in.readObject();
+
+			String checksum = object.name + object.size;
+			if (checksum.hashCode() == object.checkSum) {
+				print("Valid object. Requesting file");
+				return true;
+
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			print("Connection abbruptedly closed");
+			try {
+				s.close();
+				return false;
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+		} catch (ClassNotFoundException e) {
+			print("Invalid Class Received.");
+			try {
+				s.close();
+				return false;
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}	
+		return false;
+	}
+	
 	private boolean sendFile(FileObject file) {
 		try {
 
@@ -174,10 +209,15 @@ public class Client extends Thread {
 	}
 	
 	private boolean receiveFile() {
-		
-		
-		
-		
+		try {
+				Thread t = new FileTransfer(recDir, s, serverIP);
+				t.start();
+				t.join();
+				return true;
+		} catch (InterruptedException e) {
+			print("Thread interrupted");
+			e.printStackTrace();
+		}
 		return false;
 	}
 
