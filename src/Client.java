@@ -1,12 +1,8 @@
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.ConnectException;
 import java.net.Socket;
@@ -16,37 +12,64 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.IOUtils;
-
-
 public class Client extends Thread {
 	String serverIP;
 	Socket s = null;
 	boolean connectionValid = true;
 	FileObject object;
 	FileObject file;
-	String sendDir;
+	static String sendDir;
 	String recDir;
+	boolean useServer = false;
 	static Queue<FileObject> fileQueue = new LinkedList<>();
 	static Queue<FileObject> returnQueue = new LinkedList<>();
 	ObjectOutputStream out;
 
-	public Client(String ip, String send, String rec) {
+	public Client(String ip, String send, String rec, boolean server) {
 		serverIP = ip;
 		sendDir = send;
 		recDir = rec;
+		useServer = server;
 		
 	}
 
 	public void run() {
 		createConnection(); // Connect to server
-		if (s != null) {
+		if (s != null || useServer == false) {
 			monitorSending(); // Monitor folder for new files
 			while (connectionValid) {
 				if(fileQueue.size() > 0) {
-					object = fileQueue.remove(); // Remove file from queue
-					print(object.name);
-					sendRequest(); // Send file
+					object = fileQueue.remove(); // Remove file from queue to an object
+					AnimeFile temp = new AnimeFile(object.thisFile);
+					
+					if (temp.extension.equals("mp4")) { // If it's an MP4
+						if (Database.aList.contains(temp.animeTitle)) {
+							// Existing Title
+							temp.directory = Database.getAnimeDirectory(temp.animeTitle);
+							boolean renamed = FileOperations.renameAndMove(temp);
+							if (renamed) System.out.println("Done!");
+							Database.insertNewEpisode(temp);
+							
+						} else {
+							// New Title
+							
+							
+							
+						}
+					// If it's not an MP4, send to server if available
+					} else { 
+						if (useServer) {
+							sendRequest(); // Send file
+						} else { // If Local
+							// Move to pending folder
+							print(temp.animeTitle + " added to pending folder");
+
+						}
+						
+					}
+					
+					
+					
 				}
 				else {
 					try {
@@ -62,25 +85,35 @@ public class Client extends Thread {
 	}
 
 	private void monitorSending() {
-		new Thread(new FolderWatcher(sendDir, 0)).start();
+		if (useServer) {
+			new Thread(new FolderWatcher(sendDir, 1)).start();
+		} else {
+			new Thread(new FolderWatcher(sendDir, 0)).start();
+		}
+		
 	}
 	
 	
 	private void createConnection() {
-		try {
-			s = new Socket(serverIP, 1337);
-			print("Connected to " + serverIP);
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ConnectException e) {
-			print("Connection refused by server");
-			GUI.stopButton();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-		
+		if (useServer == true) {
+			try {
+				s = new Socket(serverIP, 1337);
+				print("Connected to " + serverIP);
+			} catch (UnknownHostException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ConnectException e) {
+				print("Connection refused by server");
+				GUI.stopButton();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		} else {
+			print("Local Mode Only");
+		}
+
 	}
 	
 	

@@ -1,8 +1,5 @@
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
-import javax.swing.JTextPane;
-import java.awt.BorderLayout;
-
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -17,11 +14,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.time.Instant;
 import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JCheckBox;
 
 public class GUI implements Runnable {
 	
@@ -31,18 +27,20 @@ public class GUI implements Runnable {
 	private static JTextField textFieldServerReceiving;
 	private static JTextField textFieldClientReceiving;
 	private static JTextField textFieldClientSending;
-	public JTextField textFieldServerIP;
+	private static JTextField textFieldServerIP;
 	ButtonGroup bGroup;
-	static JRadioButton rdbtnServer;
-	static JRadioButton rdbtnClient;
-	static JButton btnStop;
+	private static JRadioButton rdbtnServer;
+	private static JRadioButton rdbtnClient;
+	private static JButton btnStop;
 	public static JButton btnStart;
+	private static JCheckBox chckbxEnableTranscoding;
 	final JFileChooser fc = new JFileChooser();
 
 
 	public GUI() {
+		jFrame.setTitle("AnimeAIBO");
 		jFrame.setResizable(false);
-		jFrame.setSize(397, 650);
+		jFrame.setSize(396, 650);
 		jFrame.getContentPane().setLayout(null);
 		jFrame.setLocationRelativeTo(null);
 		
@@ -206,6 +204,10 @@ public class GUI implements Runnable {
 		btnClear.setBounds(10, 324, 58, 23);
 		jFrame.getContentPane().add(btnClear);
 		
+		chckbxEnableTranscoding = new JCheckBox("Enable Transcoding");
+		chckbxEnableTranscoding.setBounds(122, 38, 132, 23);
+		jFrame.getContentPane().add(chckbxEnableTranscoding);
+		
 		JMenuBar menuBar = new JMenuBar();
 		jFrame.setJMenuBar(menuBar);
 		
@@ -243,9 +245,20 @@ public class GUI implements Runnable {
 		if (rdbtnClient.isSelected()) {
 			if (Client.validateIP(textFieldServerIP.getText())) {
 				disableComponents();
-				new Thread(new Client(textFieldServerIP.getText(),
+				if (chckbxEnableTranscoding.isSelected() == true) {
+					new Thread(new Client(textFieldServerIP.getText(),
 										textFieldClientSending.getText(), 
-										textFieldClientReceiving.getText() )).start();
+										textFieldClientReceiving.getText(), true)).start();
+				}
+				else {
+					new Thread(new Client(textFieldServerIP.getText(),
+							textFieldClientSending.getText(), 
+							textFieldClientReceiving.getText(), false)).start();
+				}
+				
+				textFieldClientReceiving.setEnabled(false);
+				textFieldClientSending.setEnabled(false);
+				textFieldServerIP.setEnabled(false);
 			} else {
 				print("Invalid IP Address");
 			}
@@ -266,8 +279,10 @@ public class GUI implements Runnable {
 			btnStart.setEnabled(true);
 			textFieldClientReceiving.setEnabled(true);
 			textFieldClientSending.setEnabled(true);
+			textFieldServerIP.setEnabled(true);
 			rdbtnServer.setEnabled(true);
 			rdbtnClient.setEnabled(true);
+			chckbxEnableTranscoding.setEnabled(true);
 			FolderWatcher.stop();
 		}
 	}
@@ -288,6 +303,8 @@ public class GUI implements Runnable {
 		textFieldServerReceiving.setEnabled(false);
 		rdbtnServer.setEnabled(false);
 		rdbtnClient.setEnabled(false);
+		chckbxEnableTranscoding.setEnabled(false);
+		
 	}
 	
 	public static void enableComponentsServer() {
@@ -297,6 +314,7 @@ public class GUI implements Runnable {
 		textFieldServerReceiving.setEnabled(true);
 		rdbtnServer.setEnabled(true);
 		rdbtnClient.setEnabled(true);
+		chckbxEnableTranscoding.setEnabled(true);
 	}
 
 	@Override

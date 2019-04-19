@@ -2,6 +2,7 @@ import static java.nio.file.StandardWatchEventKinds.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -22,6 +23,10 @@ public class FolderWatcher implements Runnable {
 	public FolderWatcher(String sending, int mode) {
 		watchDir = sending;
 		this.mode = mode;
+		
+		// Mode 0 = Client
+		// 1 = Local
+		// 2 = Server
 	}
 
 	public void run() {
@@ -32,6 +37,8 @@ public class FolderWatcher implements Runnable {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (ClosedWatchServiceException e) {
+			// Remove Stop watch error message
 		}
 
 	}
@@ -70,6 +77,8 @@ public class FolderWatcher implements Runnable {
 
 						FileObject file = new FileObject(temp);
 						if (mode == 0) {
+							Client.fileQueue.add(file);
+						} else if (mode == 1) {
 							Client.fileQueue.add(file);
 						}
 						else {
